@@ -23,6 +23,7 @@
             height: calc(297mm - 20px);
             border: 10px solid #000;
             margin: 10px;
+            background: #fff;
         }
 
         .cell {
@@ -81,19 +82,22 @@
         }
 
         @media print {
+            @page {
+                margin: 0;
+            }
             body * {
                 visibility: hidden;
             }
             #layout, #layout * {
                 visibility: visible;
             }
-            .control-buttons {
-                display: none;
-            }
             #layout {
                 position: absolute;
                 left: 0;
                 top: 0;
+            }
+            .control-buttons {
+                display: none;
             }
         }
     </style>
@@ -116,6 +120,7 @@
     </div>
     <input type="file" accept="image/*" id="imageInput" multiple>
     <button onclick="printImage()">Print</button>
+    <button onclick="downloadLayout()">Download</button>
     <script>
         function updateGridLayout() {
             const layout = document.getElementById('layout');
@@ -278,6 +283,15 @@
             }
         }
 
+        function downloadLayout() {
+            html2canvas(document.querySelector("#layout")).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL("image/png");
+                link.download = 'layout.png';
+                link.click();
+            });
+        }
+
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js')
@@ -291,6 +305,7 @@
         // Initialize the grid layout
         updateGridLayout();
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
     <script type="application/json" id="manifest">
         {
             "name": "Print Layout",
