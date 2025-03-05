@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#317EFB"/>
+    <link rel="manifest" href="manifest.json">
+    <title>Print Layout</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="grid-options">
+        <label for="grid-select">Select grid layout:</label>
+        <select id="grid-select" onchange="updateGridLayout()">
+            <option value="1">1 Image per sheet</option>
+            <option value="2">2 Images per sheet</option>
+            <option value="4">4 Images per sheet</option>
+            <option value="8">8 Images per sheet</option>
+            <option value="9">9 Images per sheet</option>
+            <option value="12">12 Images per sheet</option>
+            <option value="16">16 Images per sheet</option>
+        </select>
+    </div>
+    <div id="layout">
+        <!-- Dynamic grid layout will be created here -->
+    </div>
+    <input type="file" accept="image/*" id="imageInput" multiple>
+    <button onclick="printImage()">Print</button>
+    <button onclick="downloadLayout()">Download</button>
+    <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+</body>
+</html>
