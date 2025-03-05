@@ -150,7 +150,7 @@ function downloadLayout() {
     html2canvas(document.querySelector("#layout"), { scale: 4 }).then(canvas => {
         const link = document.createElement('a');
         link.href = canvas.toDataURL("image/png");
-        link.download = 'layout.png';
+        link.download = 'ShivaShakthiPrint&Scan.png';
         link.click();
 
         // Show control buttons again
