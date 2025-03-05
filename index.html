@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#317EFB"/>
+    <link rel="manifest" href="manifest.json">
+    <title>Print Layout</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #layout {
+            display: grid;
+            width: calc(210mm - 20px);
+            height: calc(297mm - 20px);
+            border: 10px solid #000;
+            margin: 10px;
+        }
+
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #fff;
+            font-size: 24px;
+            position: relative;
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        .image-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1.5px solid white;
+            cursor: move;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            transform-origin: center;
+        }
+
+        .control-buttons {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .control-buttons button {
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        input[type="file"] {
+            margin-top: 20px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        #grid-options {
+            margin: 20px 0;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #layout, #layout * {
+                visibility: visible;
+            }
+            .control-buttons {
+                display: none;
+            }
+            #layout {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="grid-options">
+        <label for="grid-select">Select grid layout:</label>
+        <select id="grid-select" onchange="updateGridLayout()">
+            <option value="1">1 Image per sheet</option>
+            <option value="2">2 Images per sheet</option>
+            <option value="4">4 Images per sheet</option>
+            <option value="8">8 Images per sheet</option>
+            <option value="9">9 Images per sheet</option>
+            <option value="12">12 Images per sheet</option>
+            <option value="16">16 Images per sheet</option>
+        </select>
+    </div>
+    <div id="layout">
+        <!-- Dynamic grid layout will be created here -->
+    </div>
+    <input type="file" accept="image/*" id="imageInput" multiple>
+    <button onclick="printImage()">Print</button>
+    <script>
+        function updateGridLayout() {
+            const layout = document.getElementById('layout');
+            layout.innerHTML = '';
+            const gridSelect = document.getElementById('grid-select');
+            const gridValue = parseInt(gridSelect.value);
+            let columns, rows;
+            
+            switch(gridValue) {
+                case 1:
+                    columns = rows = 1;
+                    break;
+                case 2:
+                    columns = 1; rows = 2;
+                    break;
+                case 4:
+                    columns = rows = 2;
+                    break;
+                case 8:
+                    columns = 2; rows = 4;
+                    break;
+                case 9:
+                    columns = rows = 3;
+                    break;
+                case 12:
+                    columns = 3; rows = 4;
+                    break;
+                case 16:
+                    columns = rows = 4;
+                    break;
+                default:
+                    columns = rows = 1;
+            }
+
+            layout.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+            layout.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+            for (let i = 1; i <= gridValue; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${i}`;
+                
+                const imageContainer = document.createElement('div');
+                imageContainer.className = 'image-container';
+                imageContainer.id = `image-container-${i}`;
+
+                cell.appendChild(imageContainer);
+                layout.appendChild(cell);
+            }
+        }
+
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            const files = event.target.files;
+            const gridSelect = document.getElementById('grid-select');
+            const gridValue = parseInt(gridSelect.value);
+
+            for (let i = 0; i < Math.min(files.length, gridValue); i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.id = `image-${i + 1}`;
+                    img.setAttribute('data-rotation', 0);
+                    img.style.position = 'absolute';
+
+                    img.onload = function() {
+                        const imageContainer = document.getElementById(`image-container-${i + 1}`);
+                        imageContainer.innerHTML = '';
+                        imageContainer.appendChild(img);
+                        
+                        const controlButtons = document.createElement('div');
+                        controlButtons.className = 'control-buttons';
+
+                        const rotateButton = document.createElement('button');
+                        rotateButton.innerText = 'Rotate';
+                        rotateButton.onclick = function() {
+                            let currentRotation = img.getAttribute('data-rotation') || 0;
+                            currentRotation = (parseInt(currentRotation) + 90) % 360;
+                            img.style.transform = `rotate(${currentRotation}deg)`;
+                            img.setAttribute('data-rotation', currentRotation);
+                        };
+
+                        const minimizeButton = document.createElement('button');
+                        minimizeButton.innerText = '-';
+                        minimizeButton.onclick = function() {
+                            img.style.width = (img.clientWidth * 0.9) + 'px';
+                            img.style.height = (img.clientHeight * 0.9) + 'px';
+                        };
+
+                        const maximizeButton = document.createElement('button');
+                        maximizeButton.innerText = '+';
+                        maximizeButton.onclick = function() {
+                            img.style.width = (img.clientWidth * 1.1) + 'px';
+                            img.style.height = (img.clientHeight * 1.1) + 'px';
+                        };
+
+                        controlButtons.appendChild(rotateButton);
+                        controlButtons.appendChild(minimizeButton);
+                        controlButtons.appendChild(maximizeButton);
+
+                        imageContainer.appendChild(controlButtons);
+
+                        // Make the image draggable
+                        dragElement(img);
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function dragElement(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            element.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        function printImage() {
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            if (isAndroid) {
+                const layout = document.getElementById('layout');
+                let images = [];
+
+                const imgContainers = layout.querySelectorAll('.image-container img');
+                imgContainers.forEach(img => {
+                    images.push(img.src);
+                });
+
+                if (images.length > 0) {
+                    window.location.href = `intent://print?images=${encodeURIComponent(images.join(','))}#Intent;scheme=epsoniprint;package=epson.print;end`;
+                } else {
+                    alert('No images to print.');
+                }
+            } else {
+                window.print();
+            }
+        }
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+            .then(function(registration) {
+                console.log('Service Worker registered with scope:', registration.scope);
+            }).catch(function(error) {
+                console.log('Service Worker registration failed:', error);
+            });
+        }
+
+        // Initialize the grid layout
+        updateGridLayout();
+    </script>
+    <script type="application/json" id="manifest">
+        {
+            "name": "Print Layout",
+            "short_name": "PrintLayout",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "description": "A web app to print images in various layouts on an A4 sheet.",
+            "icons": [
+                {
+                    "src": "icon.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                },
+                {
+                    "src": "icon.png",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        }
+    </script>
+    <script>
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(function(registration) {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                }).catch(function(error) {
+                    console.log('Service Worker registration failed:', error);
+                });
+        }
+
+        // Service Worker Script
+        self.addEventListener('install', function(event) {
+            event.waitUntil(
+                caches.open('print-layout-cache').then(function(cache) {
+                    return cache.addAll([
+                        '/',
+                        '/index.html',
+                        '/styles.css',
+                        '/scripts.js',
+                        '/manifest.json',
+                        '/icon.png'
+                    ]);
+                })
+            );
+        });
+
+        self.addEventListener('fetch', function(event) {
+            event.respondWith(
+                caches.match(event.request).then(function(response) {
+                    return response || fetch(event.request);
+                })
+            );
+        });
+    </script>
+</body>
+</html>
