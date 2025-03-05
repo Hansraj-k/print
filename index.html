@@ -263,24 +263,7 @@
         }
 
         function printImage() {
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            if (isAndroid) {
-                const layout = document.getElementById('layout');
-                let images = [];
-
-                const imgContainers = layout.querySelectorAll('.image-container img');
-                imgContainers.forEach(img => {
-                    images.push(img.src);
-                });
-
-                if (images.length > 0) {
-                    window.location.href = `intent://print?images=${encodeURIComponent(images.join(','))}#Intent;scheme=epsoniprint;package=epson.print;end`;
-                } else {
-                    alert('No images to print.');
-                }
-            } else {
-                window.print();
-            }
+            window.print();
         }
 
         function downloadLayout() {
@@ -305,7 +288,7 @@
         // Initialize the grid layout
         updateGridLayout();
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.0.0-alpha.12/html2canvas.min.js"></script>
     <script type="application/json" id="manifest">
         {
             "name": "Print Layout",
@@ -327,41 +310,6 @@
                 }
             ]
         }
-    </script>
-    <script>
-        // Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
-                .then(function(registration) {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                }).catch(function(error) {
-                    console.log('Service Worker registration failed:', error);
-                });
-        }
-
-        // Service Worker Script
-        self.addEventListener('install', function(event) {
-            event.waitUntil(
-                caches.open('print-layout-cache').then(function(cache) {
-                    return cache.addAll([
-                        '/',
-                        '/index.html',
-                        '/styles.css',
-                        '/scripts.js',
-                        '/manifest.json',
-                        '/icon.png'
-                    ]);
-                })
-            );
-        });
-
-        self.addEventListener('fetch', function(event) {
-            event.respondWith(
-                caches.match(event.request).then(function(response) {
-                    return response || fetch(event.request);
-                })
-            );
-        });
     </script>
 </body>
 </html>
